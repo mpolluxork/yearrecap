@@ -1,0 +1,79 @@
+# Year Recap - Git Ignore File
+# Ignore all media files and generated content
+
+# ============================================
+# MEDIA AND INPUT FILES
+# ============================================
+# Your media files - the whole input folder
+Recap 2025/
+
+# ============================================
+# GENERATED OUTPUT
+# ============================================
+# All generated videos
+output/
+*.mp4
+month_*.mp4
+2025_recap.mp4
+
+# Processed clips cache
+processed/
+
+# Temporary files
+temp/
+
+# ============================================
+# DATA AND STATE FILES
+# ============================================
+# Media assignments (contains personal file paths)
+media_assignment.json
+media_assignment.json.bak
+
+# Checkpoint data
+checkpoint.json
+
+# Reports (may contain personal info)
+report_visual.txt
+report_detailed.csv
+
+# ============================================
+# PYTHON
+# ============================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# ============================================
+# IDEs AND EDITORS
+# ============================================
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+
+# ============================================
+# OS FILES
+# ============================================
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ============================================
+# LOGS
+# ============================================
+*.log
+logs/

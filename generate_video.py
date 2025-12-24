@@ -389,10 +389,39 @@ class VideoGenerator:
                           MONTH_SEPARATOR['background_color'])
             draw = ImageDraw.Draw(img)
             
-            # Load font (use default if custom not available)
-            try:
-                font = ImageFont.truetype("arial.ttf", MONTH_SEPARATOR['font_size'])
-            except:
+            # Load font (try multiple locations for cross-platform compatibility)
+            font = None
+            font_size = MONTH_SEPARATOR['font_size']
+            
+            # List of fonts to try (in order of preference)
+            font_options = [
+                # Windows
+                "arial.ttf",
+                "Arial.ttf",
+                # Linux common locations
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+                "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+                "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+                "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf",  # Arch Linux
+                "/usr/share/fonts/TTF/DejaVuSans.ttf",
+                # Ubuntu/Debian
+                "/usr/share/fonts/truetype/ubuntu/Ubuntu-Bold.ttf",
+                "/usr/share/fonts/truetype/ubuntu/Ubuntu-Regular.ttf",
+            ]
+            
+            for font_path in font_options:
+                try:
+                    font = ImageFont.truetype(font_path, font_size)
+                    logging.debug(f"Using font: {font_path}")
+                    break
+                except:
+                    continue
+            
+            # Ultimate fallback - use default with warning
+            if font is None:
+                logging.warning("No TTF font found, using default (text may appear small)")
                 font = ImageFont.load_default()
             
             # Draw month name

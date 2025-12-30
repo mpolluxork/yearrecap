@@ -697,6 +697,7 @@ class VideoGenerator:
         try:
             import sys
             import re
+            import threading
             
             process = subprocess.Popen(
                 cmd,
@@ -705,6 +706,17 @@ class VideoGenerator:
                 universal_newlines=True,
                 bufsize=1
             )
+            
+            # Create a thread to consume stderr to prevent deadlock
+            # FFmpeg writes a lot to stderr, and if the buffer fills up, it will pause
+            stderr_lines = []
+            def read_stderr():
+                """Read stderr in background to prevent buffer overflow deadlock"""
+                for line in process.stderr:
+                    stderr_lines.append(line)
+            
+            stderr_thread = threading.Thread(target=read_stderr, daemon=True)
+            stderr_thread.start()
             
             last_time = 0
             while True:
@@ -732,12 +744,15 @@ class VideoGenerator:
             # Wait for completion
             process.wait()
             
+            # Wait for stderr thread to finish reading
+            stderr_thread.join(timeout=5)
+            
             # Print newline after progress bar
             if total_duration > 0:
                 print()  # New line after progress bar
             
             if process.returncode != 0:
-                stderr_output = process.stderr.read()
+                stderr_output = ''.join(stderr_lines)
                 logging.error(f"Error concatenating videos: {stderr_output}")
                 raise subprocess.CalledProcessError(process.returncode, cmd, stderr=stderr_output)
             

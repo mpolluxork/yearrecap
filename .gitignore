@@ -31,6 +31,7 @@ temp/
 # Media assignments (contains personal file paths)
 media_assignment.json
 media_assignment.json.bak
+media_scan_cache.json
 
 # Checkpoint data
 checkpoint.json

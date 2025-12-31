@@ -23,24 +23,29 @@ def check_ytdlp():
         return False
 
 
-def download_audio(url: str, output_folder: str) -> bool:
+def download_audio(url: str, output_folder: str, index: int) -> bool:
     """
     Descargar audio de una URL de YouTube
     
     Args:
         url: URL de YouTube
         output_folder: Carpeta de destino
+        index: Número de orden (1, 2, 3...) para nombrar el archivo
         
     Returns:
         True si se descargó correctamente
     """
     try:
+        # Nombre del archivo basado en el índice: 01.mp3, 02.mp3, etc.
+        output_filename = f"{index:02d}.mp3"
+        output_path = os.path.join(output_folder, output_filename)
+        
         cmd = [
             "yt-dlp",
             "-x",  # Extract audio
             "--audio-format", "mp3",
             "--audio-quality", "0",  # Best quality
-            "-o", f"{output_folder}/%(title)s.%(ext)s",
+            "-o", f"{output_folder}/{index:02d}.%(ext)s",  # Nombre numérico
             "--no-playlist",  # Solo el video, no toda la playlist
             "--ignore-errors",
             url.strip()
@@ -95,10 +100,11 @@ def main():
     failed = 0
     
     for i, url in enumerate(urls, 1):
-        print(f"\n[{i}/{len(urls)}] {url[:60]}...")
+        print(f"\n[{i}/{len(urls)}] Descargando como {i:02d}.mp3...")
+        print(f"  URL: {url[:60]}...")
         
-        if download_audio(url, OUTPUT_FOLDER):
-            print(f"  ✅ Descargado")
+        if download_audio(url, OUTPUT_FOLDER, i):
+            print(f"  ✅ Guardado como {i:02d}.mp3")
             success += 1
         else:
             print(f"  ❌ Falló")

@@ -93,6 +93,29 @@ class CheckpointManager:
         """Check if a month is already processed"""
         return month in self.checkpoint_data['steps_completed']['months_processed']
     
+    def invalidate_month(self, month: int):
+        """
+        Invalidate a month to force regeneration
+        
+        Args:
+            month: Month number (1-12)
+        """
+        months = self.checkpoint_data['steps_completed']['months_processed']
+        if month in months:
+            months.remove(month)
+            self.save()
+            logging.info(f"🔄 Month {month} invalidated - will be regenerated")
+    
+    def invalidate_months(self, months_to_invalidate: List[int]):
+        """
+        Invalidate multiple months to force regeneration
+        
+        Args:
+            months_to_invalidate: List of month numbers (1-12)
+        """
+        for month in months_to_invalidate:
+            self.invalidate_month(month)
+    
     def get_completed_months(self) -> List[int]:
         """Get list of completed months"""
         return self.checkpoint_data['steps_completed']['months_processed']

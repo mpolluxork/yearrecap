@@ -151,9 +151,11 @@ class VideoGenerator:
             zoom_diff = zoom_end - zoom_start
             
             # Use zoompan filter on the already-letterboxed image
+            # Note: d=1 means each input frame produces 1 output frame
+            # The zoom expression calculates based on output frame number (on)
             zoompan_filter = (
                 f"zoompan=z='if(lte(on,1),{zoom_start},{zoom_start}+{zoom_diff}*(on-1)/{frames})':"
-                f"d={frames}:"
+                f"d=1:"  # 1 output frame per zoompan iteration
                 f"x='(iw-iw/zoom)/2':"
                 f"y='(ih-ih/zoom)/2':"
                 f"s={self.width}x{self.height}:"
@@ -303,13 +305,14 @@ class VideoGenerator:
             # Check if video has audio
             has_audio = any(stream['codec_type'] == 'audio' for stream in probe.get('streams', []))
             
-            # Build output parameters
+            # Build output parameters - FORCE constant framerate to fix VFR issues
             output_params = {
-                'vf': f'scale={self.width}:{self.height}:force_original_aspect_ratio=decrease,pad={self.width}:{self.height}:(ow-iw)/2:(oh-ih)/2',
+                'vf': f'fps={self.fps},scale={self.width}:{self.height}:force_original_aspect_ratio=decrease,pad={self.width}:{self.height}:(ow-iw)/2:(oh-ih)/2',
                 'c:v': 'libx264',
                 'crf': VIDEO_SETTINGS['crf'],
                 'preset': VIDEO_SETTINGS['preset'],
-                'pix_fmt': VIDEO_SETTINGS['pixel_format']
+                'pix_fmt': VIDEO_SETTINGS['pixel_format'],
+                'r': self.fps  # Force constant framerate (fixes iPhone VFR videos)
             }
             
             # Add audio parameters if audio exists
@@ -726,7 +729,11 @@ class VideoGenerator:
                 
                 # Parse progress from FFmpeg output
                 if line.startswith('out_time_ms='):
-                    time_ms = int(line.split('=')[1])
+                    value = line.split('=')[1].strip()
+                    # Skip if value is N/A (happens with some video formats)
+                    if value == 'N/A' or not value.isdigit():
+                        continue
+                    time_ms = int(value)
                     time_s = time_ms / 1000000.0  # Convert microseconds to seconds
                     
                     # Update progress every 5 seconds

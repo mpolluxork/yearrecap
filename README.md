@@ -13,6 +13,7 @@ Automatically generate a video recap of your 2025 year, with each day represente
 - 🎥 **Smart video processing** with random clip extraction
 - 🎞️ **Month separators** with elegant transitions (in Spanish)
 - 📦 **All media types supported**: JPG, PNG, HEIC, GIF, MP4, MOV
+- 🎵 **Audio soundtrack** - Add music from YouTube with crossfades between months
 
 ## Quick Start
 
@@ -44,7 +45,8 @@ This single command will:
 5. ✅ Save checkpoint to resume if interrupted (Ctrl+C, power loss)
 
 **Output:**
-- `output/2025_recap.mp4` - Your final video!
+- `output/2025_recap.mp4` - Your final video (silent)
+- `output/2025_recap_with_audio.mp4` - Your final video with music!
 - `output/month_XX_Month.mp4` - Individual monthly videos
 - `report_visual.txt` - Calendar showing coverage
 - `report_detailed.csv` - Spreadsheet with all assignments
@@ -86,13 +88,17 @@ yearrecap/
 ├── output/                  # 📁 OUTPUT: Final videos
 │   ├── month_01_Enero.mp4
 │   ├── month_02_Febrero.mp4
-│   └── 2025_recap.mp4       # Your final video
+│   ├── 2025_recap.mp4           # Your final video (silent)
+│   └── 2025_recap_with_audio.mp4 # Your final video with music
+├── audio/                   # 📁 AUDIO: Downloaded MP3s for soundtrack
 ├── processed/               # 📁 CACHE: Processed clips (kept for speed)
 ├── templates/               # 📁 UI templates (for date validator)
 ├── utils_and_tests/         # 📁 Test scripts and deprecated utilities
 │   ├── test_*.py           # Test scripts
 │   └── generate_*.py       # Old/deprecated scripts
 ├── generate_recap_optimized.py  # ⭐ MAIN SCRIPT - Run this!
+├── download_audio.py        # 🎵 Download audio from YouTube
+├── add_audio_to_recap.py    # 🎵 Add soundtrack to video
 ├── media_validator_app.py   # 🎨 UI to review/correct dates
 ├── assign_media.py          # Core: Media assignment
 ├── generate_optimized.py    # Core: Video generation
@@ -102,6 +108,7 @@ yearrecap/
 ├── config.py                # 🔧 Configuration
 ├── utils.py                 # 🔧 Helper functions
 ├── requirements.txt         # 📦 Python dependencies
+├── urls.txt                 # 🎵 YouTube URLs for audio (one per month)
 ├── media_assignment.json    # 📄 Date assignments
 └── checkpoint.json          # 📄 Resume state
 ```
@@ -146,6 +153,46 @@ The script will:
 
 **Video too short/long**
 - Adjust `PHOTO_DURATION` and `VIDEO_DURATION` in `config.py`
+
+## Adding Audio Soundtrack 🎵
+
+After generating your video, you can add a music soundtrack with a different song for each month:
+
+### Step 1: Choose Your Songs
+
+Edit `urls.txt` and add 12 YouTube URLs (one per line, one per month):
+
+```
+https://www.youtube.com/watch?v=SONG_FOR_JANUARY
+https://www.youtube.com/watch?v=SONG_FOR_FEBRUARY
+... (12 URLs total)
+```
+
+### Step 2: Download Audio
+
+**Prerequisite**: Install yt-dlp:
+```bash
+pip install yt-dlp
+```
+
+Then download the audio:
+```bash
+python download_audio.py
+```
+
+This downloads each URL as `01.mp3`, `02.mp3`, ... `12.mp3` in the `audio/` folder.
+
+### Step 3: Add Audio to Video
+
+```bash
+python add_audio_to_recap.py
+```
+
+This will:
+- Extract a random segment from each month's MP3 matching the video duration
+- Apply crossfades between monthly segments
+- Add fade in/out at the beginning and end
+- Create `output/2025_recap_with_audio.mp4`
 
 ---
 

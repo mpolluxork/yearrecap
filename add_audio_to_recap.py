@@ -10,11 +10,12 @@ import os
 import subprocess
 import json
 from pathlib import Path
+import config
 
 # Configuración
 OUTPUT_FOLDER = "output"
 AUDIO_FOLDER = "audio"
-CROSSFADE_DURATION = 1.5  # Segundos de crossfade entre canciones
+CROSSFADE_DURATION = config.MONTH_SEPARATOR_DURATION  # Segundos de crossfade entre canciones
 
 # Mapeo de meses a patrones de archivos de audio (en orden de las URLs)
 # Usamos patrones parciales para evitar problemas con caracteres especiales
@@ -76,25 +77,40 @@ def extract_audio_segment(input_audio: str, output_audio: str, duration: float,
     extract_duration = duration + crossfade_compensation
     
     # Calcular punto de inicio aleatorio
-    if audio_duration > extract_duration:
+    # El inicio máximo es: duración_audio - duración_a_extraer
+    # Esto garantiza que siempre haya suficiente audio después del punto de inicio
+    if audio_duration >= extract_duration:
         max_start = audio_duration - extract_duration
         start_time = random.uniform(0, max_start)
+        
+        cmd = [
+            "ffmpeg", "-y",
+            "-ss", str(start_time),  # Punto de inicio aleatorio
+            "-i", input_audio,
+            "-t", str(extract_duration),
+            "-c:a", "libmp3lame",
+            "-q:a", "2",
+            output_audio
+        ]
+        subprocess.run(cmd, capture_output=True, check=True)
+        print(f"  ✓ Extraído: {extract_duration:.1f}s (desde {start_time:.1f}s)")
     else:
-        # Audio más corto que lo necesario, empezar desde el inicio
-        start_time = 0
-        extract_duration = min(extract_duration, audio_duration)
-    
-    cmd = [
-        "ffmpeg", "-y",
-        "-ss", str(start_time),  # Punto de inicio aleatorio
-        "-i", input_audio,
-        "-t", str(extract_duration),
-        "-c:a", "libmp3lame",
-        "-q:a", "2",
-        output_audio
-    ]
-    subprocess.run(cmd, capture_output=True, check=True)
-    print(f"  ✓ Extraído: {extract_duration:.1f}s (desde {start_time:.1f}s)")
+        # Audio más corto que lo necesario - hacer loop
+        print(f"  ⚠️ Audio ({audio_duration:.1f}s) más corto que requerido ({extract_duration:.1f}s), haciendo loop...")
+        
+        # Usar filtro aloop para repetir el audio las veces necesarias
+        loops_needed = int(extract_duration / audio_duration) + 1
+        
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", input_audio,
+            "-af", f"aloop=loop={loops_needed}:size={int(audio_duration * 48000)},atrim=0:{extract_duration}",
+            "-c:a", "libmp3lame",
+            "-q:a", "2",
+            output_audio
+        ]
+        subprocess.run(cmd, capture_output=True, check=True)
+        print(f"  ✓ Extraído con loop: {extract_duration:.1f}s")
 
 
 def concatenate_with_crossfade(audio_files: list, output_file: str, crossfade: float):
